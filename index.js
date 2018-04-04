@@ -1,5 +1,6 @@
 require('dotenv').config();
 const spawn = require('child_process').spawn;
+const ffmpeg = require('fluent-ffmpeg');
 const request = require('request');
 
 if (!process.env.MASTERSERVER || !process.env.NAME) {
@@ -8,16 +9,15 @@ if (!process.env.MASTERSERVER || !process.env.NAME) {
 }
 
 const heartbeatInterval = 300000;
-let port = process.env.PORT || 8080;
-let bitrate = 3 * 1000 * 1000;
-let cvlcParams = ['-vvv', '-', '--sout', `#rtp{sdp=rtsp://:${port}/}`, ':demux=h264'];
+let bitrate = 5 * 1000 * 1000;
+let ffmpegInputOptions = ['-f', 'h264'];
+let ffmpegOutputOptions = ['-vcodec copy', '-rtmp_live', 'live'];
 
 function sendHearbeat() {
     console.log('Sending heartbeat to ' + process.env.MASTERSERVER + '/heartbeat');
     let heartbeatData = {
-        baseUrl: 'http://0.0.0.0',
         name: process.env.NAME,
-        fragment: '/'
+        fragment: process.env.RTMPPATH
     };
     console.dir(heartbeatData);
     request.post(
@@ -39,9 +39,27 @@ function generateRaspividOptions(bitrate) {
     return ['-o', '-', '-t', '0', '-n', '-h', '1080', '-w', '1920', '-ih', '-fps', '30', '-b', bitrate.toString(), '-fl'];
 }
 let cameraStream = spawn('raspivid', generateRaspividOptions(bitrate));
-let cvlc = spawn('cvlc', cvlcParams, {stdio: [cameraStream.stdout]});
-cvlc.stderr.pipe(process.stdout);
+let conversion = new ffmpeg(cameraStream.stdout).noAudio().inputOptions(ffmpegInputOptions).outputOptions(ffmpegOutputOptions).format('flv').output(`rtmp://127.0.0.1${process.env.RTMPPATH}`);
 
+cameraStream.stderr.on('data', function (data) {
+    console.log('Error while connecting to camera: ' + data.toString());
+    process.exit(1);
+});
+
+conversion.on('error', function(err, stdout, stderr) {
+    console.log('Cannot process video: ' + err.message);
+    process.exit(1);
+});
+
+conversion.on('start', function(commandLine) {
+    console.log('Spawned Ffmpeg with command: ' + commandLine);
+});
+
+conversion.on('stderr', function(stderrLine) {
+    console.log('Stderr output: ' + stderrLine);
+});
+
+conversion.run();
 
 sendHearbeat();
 setInterval(sendHearbeat, heartbeatInterval);
