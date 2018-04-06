@@ -22,7 +22,6 @@ let ffmpegOutputOptions = ['-vcodec copy', '-use_localtime 1', '-hls_time 2', '-
 function sendHearbeat() {
     console.log('Sending heartbeat to ' + process.env.MASTERSERVER + '/heartbeat');
     let heartbeatData = {
-        baseUrl: 'http://0.0.0.0',
         name: process.env.NAME,
         fragment: "live.m3u8"
     };
