@@ -13,21 +13,26 @@ if (!process.env.MASTERSERVER || !process.env.NAME) {
 
 mkdirp.sync('/tmp/camera');
 
+let masterServer = process.env.MASTERSERVER;
+if (!masterServer.startsWith('http://')) {
+	masterServer = 'http://' + process.env.MASTERSERVER;
+}
+
 let port = process.env.PORT || 8080;
 let bitrate = 3 * 1000 * 1000;
 const heartbeatInterval = 300000;
 let ffmpegInputOptions = ['-re'];
-let ffmpegOutputOptions = ['-vcodec copy', '-use_localtime 1', '-hls_time 2', '-hls_list_size 3', '-hls_flags delete_segments+split_by_time', '-hls_segment_filename /tmp/camera/segment-%Y-%m-%d_%H-%M-%S.ts'];
+let ffmpegOutputOptions = ['-vcodec copy', '-use_localtime 1', '-hls_time 1', '-hls_list_size 4', '-hls_flags delete_segments+split_by_time', '-hls_segment_filename /tmp/camera/segment-%Y-%m-%d_%H-%M-%S.ts'];
 
 function sendHearbeat() {
-    console.log('Sending heartbeat to ' + process.env.MASTERSERVER + '/heartbeat');
+    console.log('Sending heartbeat to ' + masterServer + '/heartbeat');
     let heartbeatData = {
         name: process.env.NAME,
         fragment: "live.m3u8"
     };
     console.dir(heartbeatData);
     request.post(
-        process.env.MASTERSERVER + '/heartbeat',
+        masterServer + '/heartbeat',
         {
             json: heartbeatData
         },
@@ -40,7 +45,7 @@ function sendHearbeat() {
 }
 
 function generateRaspividOptions(bitrate) {
-    return ['-o', '-', '-t', '0', '-n', '-h', '1080', '-w', '1920', '-ih', '-fps', '30', '-b', bitrate.toString(), '-fl'];
+    return ['-o', '-', '-t', '0', '-n', '-h', '1080', '-w', '1920', '-ih', '-pf', 'baseline', '-fps', '30', '-g', '30', '-b', bitrate.toString(), '-fl'];
 }
 let cameraStream = spawn('raspivid', generateRaspividOptions(bitrate));
 let conversion = new ffmpeg(cameraStream.stdout).noAudio().format('hls').inputOptions(ffmpegInputOptions).outputOptions(ffmpegOutputOptions).output(`/tmp/camera/live.m3u8`);
