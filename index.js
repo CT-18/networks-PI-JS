@@ -21,7 +21,7 @@ if (!masterServer.startsWith('http://')) {
 let port = process.env.PORT || 8080;
 let bitrate = 3 * 1000 * 1000;
 const heartbeatInterval = 300000;
-let ffmpegInputOptions = ['-re'];
+let ffmpegInputOptions = ['-loglevel', 'panic'];
 let ffmpegOutputOptions = ['-vcodec copy', '-use_localtime 1', '-hls_time 1', '-hls_list_size 4', '-hls_flags delete_segments+split_by_time', '-hls_segment_filename /tmp/camera/segment-%Y-%m-%d_%H-%M-%S.ts'];
 
 function sendHearbeat() {
