@@ -38,8 +38,10 @@ function sendHearbeat() {
         },
         function (error) {
             if (error) {
-                console.error(`Something wrong with heartbeat request. error: ${error}`);
-            }
+                console.error(`Failed to send heartbeat. ${error}`);
+            } else {
+                console.log('Heartbeat send success');
+	    }
         }
     );
 }
