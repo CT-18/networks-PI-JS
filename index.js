@@ -57,16 +57,15 @@ function launchStream() {
     console.log(`Spawned raspivid with ${(bitrateMultiplier * 1000 * 1000)} bitrate`);
     conversion = new ffmpeg(cameraStream.stdout).noAudio().format('hls').inputOptions(ffmpegInputOptions).outputOptions(ffmpegOutputOptions).output(`/tmp/camera/live.m3u8`);
     cameraStream.stderr.on('data', function (data) {
-        console.log('Error while connecting to camera: ' + data.toString());
-        process.exit(1);
+        console.log('Camera info: ' + data.toString());
     });
 
     conversion.on('start', function(commandLine) {
         console.log('Spawned Ffmpeg with command: ' + commandLine);
     });
 
-    conversion.on('stderr', function(stderrLine) {
-        console.log('Cannot process video: ' + stderrLine);
+    conversion.on('error', function(err) {
+        console.log('Cannot process video: ' + err);
         process.exit(1);
     });
 
