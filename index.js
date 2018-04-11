@@ -22,9 +22,9 @@ if (!masterServer.startsWith('http://')) {
 }
 
 let port = process.env.PORT || 8080;
-let bitrateMultiplier = 5;
+let bitrateMultiplier = 1;
 const heartbeatInterval = 300000;
-let ffmpegInputOptions = ['-loglevel', 'panic'];
+let ffmpegInputOptions = [];
 let ffmpegOutputOptions = ['-vcodec copy', '-use_localtime 1', '-hls_time 2', '-hls_list_size 2', '-hls_flags delete_segments+split_by_time', '-hls_segment_filename /tmp/camera/segment-%Y-%m-%d_%H-%M-%S.ts'];
 
 let cameraStream = null;
@@ -53,7 +53,7 @@ function sendHearbeat() {
 }
 
 function launchStream() {
-    cameraStream = spawn('raspivid', ['-o', '-', '-t', '0', '-n', '-h', '1080', '-w', '1920', '-ih', '-pf', 'baseline', '-fps', '30', '-g', '30', '-b', (bitrateMultiplier * 1000 * 1000).toString(), '-fl']);
+    cameraStream = spawn('raspivid', ['-o', '-', '-t', '0', '-n', '-h', '1080', '-w', '1920', '-ih', '-pf', 'baseline', '-fps', '15', '-g', '15', '-b', (bitrateMultiplier * 1000 * 1000).toString(), '-fl']);
     console.log(`Spawned raspivid with ${(bitrateMultiplier * 1000 * 1000)} bitrate`);
     conversion = new ffmpeg(cameraStream.stdout).noAudio().format('hls').inputOptions(ffmpegInputOptions).outputOptions(ffmpegOutputOptions).output(`/tmp/camera/live.m3u8`);
     cameraStream.stderr.on('data', function (data) {
@@ -67,6 +67,10 @@ function launchStream() {
     conversion.on('error', function(err) {
         console.log('Cannot process video: ' + err);
         process.exit(1);
+    });
+
+    conversion.on('stderr', function (line) {
+        console.log('Ffmpeg info: ' + line);
     });
 
     conversion.run();
