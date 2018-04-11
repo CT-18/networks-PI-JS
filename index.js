@@ -23,7 +23,7 @@ if (!masterServer.startsWith('http://')) {
 
 let port = process.env.PORT || 8080;
 let bitrateMultiplier = 1;
-const heartbeatInterval = 300000;
+const heartbeatInterval = 1000;
 let ffmpegInputOptions = [];
 let ffmpegOutputOptions = ['-vcodec copy', '-use_localtime 1', '-hls_time 2', '-hls_list_size 2', '-hls_flags delete_segments+split_by_time', '-hls_segment_filename /tmp/camera/segment-%Y-%m-%d_%H-%M-%S.ts'];
 
