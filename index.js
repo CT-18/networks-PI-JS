@@ -53,7 +53,7 @@ function sendHearbeat() {
 }
 
 function launchStream() {
-    cameraStream = spawn('raspivid', ['-o', '-', '-t', '0', '-n', '-h', '1080', '-w', '1920', '-ih', '-pf', 'baseline', '-fps', '15', '-g', '15', '-b', (bitrateMultiplier * 1000 * 1000).toString(), '-fl']);
+    cameraStream = spawn('raspivid', ['-o', '-', '-t', '0', '-n', '-h', '1080', '-w', '1920', '-ih', '-pf', 'baseline', '-fps', '30', '-g', '60', '-b', (bitrateMultiplier * 1000 * 1000).toString(), '-fl']);
     console.log(`Spawned raspivid with ${(bitrateMultiplier * 1000 * 1000)} bitrate`);
     conversion = new ffmpeg(cameraStream.stdout).noAudio().format('hls').inputOptions(ffmpegInputOptions).outputOptions(ffmpegOutputOptions).output(`/tmp/camera/live.m3u8`);
     cameraStream.stderr.on('data', function (data) {
